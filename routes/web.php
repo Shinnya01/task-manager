@@ -12,7 +12,7 @@ use App\Http\Controllers\StudentSubmissionController;
 
 
 Route::get('/', function () {
-    if(auth()->user()->role !== "user"){
+    if(auth()->check() &&auth()->user()->role !== "user"){
         return redirect()->route('user-management.index');
     }
     return redirect()->route("task.index");
