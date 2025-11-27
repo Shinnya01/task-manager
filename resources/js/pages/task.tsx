@@ -39,6 +39,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 
 export default function UserManagement({tasks}: {tasks: Task[]}){
@@ -93,13 +100,27 @@ export default function UserManagement({tasks}: {tasks: Task[]}){
                                 value={data.subject}
                                 onChange={(e) => setData("subject", e.target.value)}
                             />
+                            
                             {errors.subject && <p className="text-red-600 text-sm">{errors.subject}</p>}
 
-                            <Input
+                            {/* <Input
                                 placeholder="Class"
                                 value={data.class_name}
                                 onChange={(e) => setData("class_name", e.target.value)}
-                            />
+                            /> */}
+                            <Select
+                            value={data.class_name} 
+                            onValueChange={(value) => setData("class_name", value)}
+                            >
+                                <SelectTrigger >
+                                    <SelectValue placeholder="Class"/>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="IT 3A">IT 3A</SelectItem>
+                                    <SelectItem value="IT 3B">IT 3B</SelectItem>
+                                    <SelectItem value="IT 3C">IT 3C</SelectItem>
+                                </SelectContent>
+                            </Select>
                             {errors.class_name && <p className="text-red-600 text-sm">{errors.class_name}</p>}
 
                             <Button className="w-full" onClick={handleSubmit} disabled={processing}>

@@ -14,6 +14,30 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { SharedData } from "@/types";
+import * as React from "react"
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
+  VisibilityState,
+} from "@tanstack/react-table"
+import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 type SubtaskType = {
   id: number;
@@ -44,6 +68,7 @@ type TaskType = {
 };
 
 export default function SubTask() {
+  const { auth } = usePage<SharedData>().props;
   const { task, auth_user_id } = usePage().props as unknown as {
     task: TaskType;
     auth_user_id: number;
@@ -80,6 +105,88 @@ export default function SubTask() {
       onSuccess: () => router.reload(),
     });
   };
+
+  const columns: ColumnDef<SubtaskType>[] = [
+    {
+    accessorKey: "title",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Title
+          <ArrowUpDown />
+        </Button>
+      )
+    },
+    cell: ({ row }) => <div className="font-medium ml-3">{row.getValue("title")}</div>,
+    },
+    {
+    accessorKey: "due_date",
+    header: "due_date",
+    cell: ({ row }) => {
+      const due_date = row.getValue("due_date")
+      const isValidDate =
+        typeof due_date === "string" &&
+        due_date.trim() !== "" &&
+        !isNaN(Date.parse(due_date))
+      
+      return (
+          <div>
+            {isValidDate
+              ? new Date(due_date).toLocaleDateString()
+              : "No due date"}
+          </div>
+      )
+    },
+    },
+    {
+
+    header: "submitted",
+    cell: ({  }) => (
+      <div className="capitalize">11/ 20</div>
+    ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <div className="space-x-2 text-right">
+          <Button size="sm" variant="outline">Edit</Button>
+          <Button size="sm" variant="destructive">Delete</Button>
+          <Button size="sm" className="bg-blue-700">View Submission</Button>
+
+        </div>
+      ),
+    },
+  ]
+
+  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  )
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({})
+  const [rowSelection, setRowSelection] = React.useState({})
+
+   const table = useReactTable({
+    data: task.subtasks,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  })
 
   return (
     <AppLayout>
@@ -145,103 +252,167 @@ export default function SubTask() {
         </div>
 
         {/* Subtasks List */}
-        <div className="space-y-4">
-          {task.subtasks.length === 0 && (
-            <p className="text-center text-gray-500">No subtasks yet.</p>
-          )}
+        {auth.user.role === 'teacher' ? 
+          (
+            // TEACHER POV
+            <div className="overflow-hidden rounded-md border">
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          <TableHead key={header.id}>
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                          </TableHead>
+                        )
+                      })}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center"
+                      >
+                        No results.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )
+          :
+          (
+            
+            <div className="space-y-4">
+              {task.subtasks.length === 0 && (
+                <p className="text-center text-gray-500">No Tasks yet.</p>
+              )}
 
-          {task.subtasks.map((sub, index) => {
-            const currentUserData = sub.users.find((user) => user.id === auth_user_id);
-            const done = currentUserData?.pivot?.status === 'submitted';
-            const dueDate = sub.due_date ? new Date(sub.due_date + 'Z') : null;
-            const missing = currentUserData?.pivot?.status === 'missing';
-            const previous = task.subtasks[index - 1];
-            const locked =
-              previous &&
-              !previous.users.some((user) => user.id === auth_user_id);
+              {task.subtasks.map((sub, index) => {
+                const currentUserData = sub.users.find((user) => user.id === auth_user_id);
+                const done = currentUserData?.pivot?.status === 'submitted';
+                const dueDate = sub.due_date ? new Date(sub.due_date + 'Z') : null;
+                const missing = currentUserData?.pivot?.status === 'missing';
+                const previous = task.subtasks[index - 1];
+                const locked =
+                  previous &&
+                  !previous.users.some((user) => user.id === auth_user_id);
 
-            return (
-              <Card
-                key={sub.id}
-                className={`${
-                  done ? 'bg-green-50' : missing ? 'bg-red-50' : locked ? 'bg-zinc-300' :'bg-blue-50'
-                } ${locked ? 'opacity-50' : ''}`}
-              >
-                <CardHeader>
-                  <div className="flex justify-between">
-                  <CardTitle className="text-lg flex justify-between">
-                    <div>
-                      {sub.title}
-                      
-                    </div>
-                  </CardTitle>
-                  {!locked && !done && !missing ? (
-                  <CardContent className="p-0">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button size="sm">Add work</Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Submit Work</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-2 py-2">
-                          <Input
-                            type="file"
-                            onChange={(e) =>
-                              setSelectedFiles({
-                                ...selectedFiles,
-                                [sub.id]: e.target.files?.[0] ?? null,
-                              })
-                            }
-                          />
+                return (
+                  <Card
+                    key={sub.id}
+                    className={`${
+                      done ? 'bg-green-50' : missing ? 'bg-red-50' : locked ? 'bg-zinc-300' :'bg-blue-50'
+                    } ${locked ? 'opacity-50' : ''}`}
+                  >
+                    <CardHeader>
+                      <div className="flex justify-between">
+                      <CardTitle className="text-lg flex justify-between">
+                        <div>
+                          {sub.title}
+                          
                         </div>
-                        <DialogFooter>
-                          <Button
-                            onClick={() => handleTurnIn(sub.id)}
-                            size="sm"
-                          >
-                            Turn in
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </CardContent>
-                  )
-                : 
-                <div>
-                    {done && <p className="text-green-500">Turned In</p>}
-                    {locked && <p className="text-gray-500">Locked</p>}
-                    {missing && <p className="text-red-600">Missing</p>}
-                </div>
-                }
-                </div>
-                {sub.description && 
-                  <CardDescription>{sub.description}</CardDescription>
-                }
-                {currentUserData?.pivot?.file && (
-                  <CardDescription>
-                    File: <a href={`/storage/${currentUserData.pivot.file}`} target="_blank" rel="noopener noreferrer"><Button size="sm" variant="outline">View</Button></a>
-                  </CardDescription>
-                )}
+                      </CardTitle>
+                      {!locked && !done && !missing ? (
+                      <CardContent className="p-0">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm">Add work</Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Submit Work</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-2 py-2">
+                              <Input
+                                type="file"
+                                onChange={(e) =>
+                                  setSelectedFiles({
+                                    ...selectedFiles,
+                                    [sub.id]: e.target.files?.[0] ?? null,
+                                  })
+                                }
+                              />
+                            </div>
+                            <DialogFooter>
+                              <Button
+                                onClick={() => handleTurnIn(sub.id)}
+                                size="sm"
+                              >
+                                Turn in
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </CardContent>
+                      )
+                    : 
+                    <div>
+                        {done && <p className="text-green-500">Turned In</p>}
+                        {locked && <p className="text-gray-500">Locked</p>}
+                        {missing && <p className="text-red-600">Missing</p>}
+                    </div>
+                    }
+                    </div>
+                    {sub.description && 
+                      <CardDescription>{sub.description}</CardDescription>
+                    }
+                    {currentUserData?.pivot?.file && (
+                      <CardDescription>
+                        File: <a href={`/storage/${currentUserData.pivot.file}`} target="_blank" rel="noopener noreferrer"><Button size="sm" variant="outline">View</Button></a>
+                      </CardDescription>
+                    )}
 
-                {currentUserData?.pivot?.turned_in_at && (
-                  <CardDescription>
-                    Submitted at: {new Date(currentUserData.pivot.turned_in_at).toLocaleString()}
-                  </CardDescription>
-                )}
-                
-                
-                  <CardDescription>
-                    Due: {sub.due_date ? new Date(sub.due_date).toLocaleString() : "No due date"}
-                </CardDescription>
-                </CardHeader>
+                    {currentUserData?.pivot?.turned_in_at && (
+                      <CardDescription>
+                        Submitted at: {new Date(currentUserData.pivot.turned_in_at).toLocaleString()}
+                      </CardDescription>
+                    )}
+                    
+                    
+                      <CardDescription>
+                        <p>                   
+                          Due: {sub.due_date ? new Date(sub.due_date).toLocaleString() : "No due date"}
+                        </p>
+                        {/* <p className="flex gap-2 items-center text-sm">
+                          99% <Progress value={44}/>
+                        </p> */}
+                      </CardDescription>
+                    </CardHeader>
 
-                
-              </Card>
-            );
-          })}
-        </div>
+                    
+                  </Card>
+                );
+              })}
+            </div>
+          )
+        } 
       </div>
     </AppLayout>
   );
