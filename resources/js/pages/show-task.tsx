@@ -1,11 +1,11 @@
 import AppLayout from "@/layouts/app-layout";
 import { Task } from "@/types";
-import { Head } from "@inertiajs/react";
+import { Head, useForm } from "@inertiajs/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { SendHorizonal } from "lucide-react";
+import { Search, SendHorizonal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -16,18 +16,77 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 
-export default function ShowTask({tasks}: {tasks:Task[]}){
+export default function SubTask(){
+    const { data, setData, post, processing, reset, errors } = useForm({
+            subject: "",
+            class_name: "",
+        });
+    
+        const handleSubmit = () => {
+            post('task', {
+                onSuccess: () => {
+                    alert('Create Success')
+                    reset()
+                },
+            });
+        };
+
     return (
         <AppLayout>
             <Head title="Task"/>
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                {tasks.map((task) => (
+                <div className="flex justify-between">
+                    
+                    <InputGroup className="max-w-lg">
+                        <InputGroupInput placeholder="Search..." />
+                        <InputGroupAddon>
+                        <Search />
+                        </InputGroupAddon>
+                        <InputGroupAddon align="inline-end">12 results</InputGroupAddon>
+                    </InputGroup>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button>Create Task</Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-sm">
+                            <DialogHeader>
+                            <DialogTitle>Create Task</DialogTitle>
+                            <DialogDescription>
+                                Add a new task with a subject and class.
+                            </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-2">
+                            <Input
+                                placeholder="Subject"
+                                value={data.subject}
+                                onChange={(e) => setData("subject", e.target.value)}
+                            />
+                            {errors.subject && <p className="text-red-600 text-sm">{errors.subject}</p>}
+
+                            <Input
+                                placeholder="Class"
+                                value={data.class_name}
+                                onChange={(e) => setData("class_name", e.target.value)}
+                            />
+                            {errors.class_name && <p className="text-red-600 text-sm">{errors.class_name}</p>}
+
+                            <Button className="w-full" onClick={handleSubmit} disabled={processing}>
+                                {processing ? "Saving..." : "Save Task"}
+                            </Button>
+                            </div>
+                        </DialogContent>
+                        </Dialog>
+
+                </div>
+                <div className="space-y-4">
+                {[...Array(4)].map((_, i) => (
                         <Card className="gap-2">
                             <CardHeader>
                                 <div className="flex justify-between">
                                     <div className="space-y-2">
-                                    <CardTitle>{task.title}</CardTitle>
+                                    <CardTitle>asd</CardTitle>
                                     <CardDescription
                                         className="text-red-600 font-medium">
                                         Missing
@@ -53,14 +112,14 @@ export default function ShowTask({tasks}: {tasks:Task[]}){
                                     {/* <p className="text-green-700 text-base">Turned In</p> */}
                                 </div>
                                 
-                                <CardDescription>{task.class}</CardDescription>
+                                <CardDescription>asd</CardDescription>
                                 <CardDescription className="max-w-xs flex gap-2 items-center">
                                     <span className="text-xs">99%</span><Progress value={30}/>
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <p>{task.description}</p>
-                                <CardDescription>Due: {task.due_date}</CardDescription>
+                                <p>ads</p>
+                                <CardDescription>Due: asd</CardDescription>
                             </CardContent>
                             {/* <Card className="m-4 mb-0">
                                 <CardHeader>
@@ -83,6 +142,7 @@ export default function ShowTask({tasks}: {tasks:Task[]}){
                             </Card> */}
                         </Card>
                     ))}
+                </div>
             </div>
         </AppLayout>
     )

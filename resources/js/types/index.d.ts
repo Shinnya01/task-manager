@@ -48,7 +48,7 @@ export interface Task {
     subject: string
     title: string
     description: string
-    class: string
+    class_name: string
     uploader_id: number
     progress: number 
     due_date: string

@@ -13,26 +13,7 @@ class TaskController extends Controller
      */
     public function index()
     {
-        $tasks = [
-            [
-                'id' => 1,
-                'subject' => 'Math',
-                'title' => 'Math Homework 1',
-                'description' => 'Algebra exercises',
-                'class' => 'IT 1C',
-                'uploader_id' => 1,
-                'due_date' => '2025-12-05',
-            ],
-            [
-                'id' => 2,
-                'subject' => 'Science',
-                'title' => 'Science Project',
-                'description' => 'Build a volcano',
-                'class' => 'IT 1C',
-                'uploader_id' => 2,
-                'due_date' => '2025-12-10',
-            ]
-        ];
+        $tasks = Task::all();
 
         return Inertia::render('task', compact('tasks'));
     }
@@ -50,37 +31,35 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // Validate input
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'class_name' => 'required|string|max:255',
+        ]);
+
+        // Create the task
+        $task = Task::create([
+            'subject' => $validated['subject'],
+            'class_name' => $validated['class_name'],
+        ]);
+
+        // If using Inertia + React, return a redirect or JSON
+        return back()->with('success', 'Task created successfully.');
     }
 
     /**
      * Display the specified resource.
      */
-    // public function show(Task $task)
-    public function show()
+    public function show(Task $task)
     {
-        $tasks = [
-            [
-                'id' => 1,
-                'subject' => 'Math',
-                'title' => 'Math Homework 1',
-                'description' => 'Algebra exercises',
-                'class' => 'IT 1C',
-                'uploader_id' => 1,
-                'due_date' => '2025-12-05',
-            ],
-            [
-                'id' => 2,
-                'subject' => 'Science',
-                'title' => 'Science Project',
-                'description' => 'Build a volcano',
-                'class' => 'IT 1C',
-                'uploader_id' => 2,
-                'due_date' => '2025-12-10',
-            ]
-        ];
+        $task->load(['subtasks' => function ($query) {
+            $query->orderBy('order');
+        }]);
 
-        return Inertia::render('show-task', compact('tasks'));
+        return Inertia::render('show-task', [
+            'task' => $task,
+            'subtasks' => $task->subtasks,
+        ]);
     }
 
     /**

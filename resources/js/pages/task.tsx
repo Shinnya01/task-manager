@@ -1,6 +1,6 @@
 import AppLayout from "@/layouts/app-layout";
 import { SharedData, Task, User } from "@/types";
-import { Head, router, usePage } from "@inertiajs/react";
+import { Head, router, useForm, usePage } from "@inertiajs/react";
 import * as React from "react"
 import {
   ColumnDef,
@@ -14,7 +14,7 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
+import { ArrowUpDown, ChevronDown, MoreHorizontal, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -37,265 +37,94 @@ import {
 } from "@/components/ui/table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
 
 export default function UserManagement({tasks}: {tasks: Task[]}){
     const { auth } = usePage<SharedData>().props;
-    type TaskType = {
-        id: number
-        subject: string
-        title: string
-        class: string
-        uploader_id: number
-        progress: number 
-        due_date: string
-    }
-
-    const columns: ColumnDef<TaskType>[] = [
-    {
-        id: "select",
-        header: ({ table }) => (
-        <Checkbox
-            checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-            aria-label="Select all"
-        />
-        ),
-        cell: ({ row }) => (
-        <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
-        />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-        },
-        {
-            accessorKey: "title",
-            header: ({ column }) => {
-            return (
-                <Button
-                variant="ghost"
-                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                Title
-                <ArrowUpDown />
-                </Button>
-            )
-            },
-            cell: ({ row }) => <div className="lowercase ml-3">{row.getValue("title")}</div>,
-        },
-        {
-            accessorKey: "class",
-            header: ({ column }) => {
-            return (
-                <Button
-                variant="ghost"
-                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                Class
-                <ArrowUpDown />
-                </Button>
-            )
-            },
-            cell: ({ row }) => <div className="lowercase ml-3">{row.getValue("class")}</div>,
-        },
-        {
-            accessorKey: "uploader_id",
-            header: ({ column }) => {
-            return (
-                <Button
-                variant="ghost"
-                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                Uploader
-                <ArrowUpDown />
-                </Button>
-            )
-            },
-            cell: ({ row }) => <div className="lowercase ml-3">{row.getValue("uploader_id")}</div>,
-        },
-        {
-            accessorKey: "due_date",
-            header: ({ column }) => {
-            return (
-                <Button
-                variant="ghost"
-                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                Due Date
-                <ArrowUpDown />
-                </Button>
-            )
-            },
-            cell: ({ row }) => <div className="lowercase ml-3">{row.getValue("due_date")}</div>,
-        },
-        {
-            id: "actions",
-            enableHiding: false,
-            cell: ({ row }) => {
-            const payment = row.original
-            return (
-                <div className="space-x-2 text-right">
-                    <Button size="sm" variant="destructive">Delete</Button>
-                    <Button size="sm" variant="secondary">Edit</Button>
-                </div>
-            )
-            },
-        },
-    ]
-
-    const [sorting, setSorting] = React.useState<SortingState>([])
-    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-        []
-    )
-    const [columnVisibility, setColumnVisibility] =
-        React.useState<VisibilityState>({})
-    const [rowSelection, setRowSelection] = React.useState({})
-
-    const table = useReactTable({
-    data: tasks,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  })
 
     const handleShow = (id: number) => {
-        router.visit('task/1');
-        // router.visit(`task/${id}`);
+        // router.visit('sub-task/1');
+        router.visit(`task/${id}`);
     }
+
+    const { data, setData, post, processing, reset, errors } = useForm({
+        subject: "",
+        class_name: "",
+    });
+
+    const handleSubmit = () => {
+        post('task', {
+            onSuccess: () => {
+                alert('Create Success')
+                reset()
+            },
+        });
+    };
+    
     return (
         <AppLayout>
             <Head title="User Management"/>
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                {auth.user.role !== 'user' ? (
-                <div className="flex-1">
-                    <div className="flex items-center py-4 justify-between">
-                        <Input
-                        placeholder="Filter emails..."
-                        value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-                        onChange={(event) =>
-                            table.getColumn("title")?.setFilterValue(event.target.value)
-                        }
-                        className="max-w-sm"
-                        />
-                        {auth.user.role !== 'student' && (
-                            <Button>
-                                Create Task
+                {/* {auth.user.role !== 'user' && ( */}
+                <div className="flex justify-between">
+                    <InputGroup className="max-w-lg">
+                        <InputGroupInput placeholder="Search..." />
+                        <InputGroupAddon>
+                        <Search />
+                        </InputGroupAddon>
+                        <InputGroupAddon align="inline-end">12 results</InputGroupAddon>
+                    </InputGroup>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button>Create Task</Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-sm">
+                            <DialogHeader>
+                            <DialogTitle>Create Task</DialogTitle>
+                            <DialogDescription>
+                                Add a new task with a subject and class.
+                            </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-2">
+                            <Input
+                                placeholder="Subject"
+                                value={data.subject}
+                                onChange={(e) => setData("subject", e.target.value)}
+                            />
+                            {errors.subject && <p className="text-red-600 text-sm">{errors.subject}</p>}
+
+                            <Input
+                                placeholder="Class"
+                                value={data.class_name}
+                                onChange={(e) => setData("class_name", e.target.value)}
+                            />
+                            {errors.class_name && <p className="text-red-600 text-sm">{errors.class_name}</p>}
+
+                            <Button className="w-full" onClick={handleSubmit} disabled={processing}>
+                                {processing ? "Saving..." : "Save Task"}
                             </Button>
-                        )}
-                    </div>
-                    <div className="overflow-hidden rounded-md border">
-                        <Table>
-                        <TableHeader>
-                            {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => {
-                                return (
-                                    <TableHead key={header.id}>
-                                    {header.isPlaceholder
-                                        ? null
-                                        : flexRender(
-                                            header.column.columnDef.header,
-                                            header.getContext()
-                                        )}
-                                    </TableHead>
-                                )
-                                })}
-                            </TableRow>
-                            ))}
-                        </TableHeader>
-                        <TableBody>
-                            {table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row) => (
-                                <TableRow
-                                key={row.id}
-                                data-state={row.getIsSelected() && "selected"}
-                                >
-                                {row.getVisibleCells().map((cell) => (
-                                    <TableCell key={cell.id}>
-                                    {flexRender(
-                                        cell.column.columnDef.cell,
-                                        cell.getContext()
-                                    )}
-                                    </TableCell>
-                                ))}
-                                </TableRow>
-                            ))
-                            ) : (
-                            <TableRow>
-                                <TableCell
-                                colSpan={columns.length}
-                                className="h-24 text-center"
-                                >
-                                No results.
-                                </TableCell>
-                            </TableRow>
-                            )}
-                        </TableBody>
-                        </Table>
-                    </div>
-                    <div className="flex items-center justify-end space-x-2 py-4">
-                        <div className="text-muted-foreground flex-1 text-sm">
-                        {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                        {table.getFilteredRowModel().rows.length} row(s) selected.
-                        </div>
-                        <div className="space-x-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                        >
-                            Next
-                        </Button>
-                        </div>
-                    </div>
+                            </div>
+                        </DialogContent>
+                        </Dialog>
+
                 </div>
-                )
-                :
+                {/* ads)} */}
                 <div className="flex-1 space-y-4">
                     {tasks.map((task) => (
                         <Card className="hover:shadow-md transition gap-4" onClick={() => handleShow(task.id)}>
                             <CardHeader>
                                 <CardTitle>{task.subject}</CardTitle>
-                                <CardDescription>{task.class}</CardDescription>
-                                {/* <CardDescription className="max-w-xs flex gap-2 items-center">
-                                    <span className="text-xs">99%</span><Progress value={30}/>
-                                </CardDescription> */}
+                                <CardDescription>{task.class_name}</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {/* <p>{task.description}</p> */}
-                                {/* <CardDescription>Due: {task.due_date}</CardDescription> */}
                                 <CardDescription>Remaining Task: 4</CardDescription>
                             </CardContent>
                         </Card>
                     ))}
                 </div>
-            }
+            
             </div>
         </AppLayout>
     );
