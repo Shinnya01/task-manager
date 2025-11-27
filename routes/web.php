@@ -22,6 +22,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('task', TaskController::class);
 
     Route::resource('sub-task', SubTaskController::class);
+
+    Route::post('/sub-task/{subTask}/turn-in', [SubTaskController::class, 'turnIn'])
+     ->name('sub-task.turn-in');
+
 });
 
 require __DIR__.'/settings.php';

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
@@ -51,15 +52,14 @@ class TaskController extends Controller
      * Display the specified resource.
      */
     public function show(Task $task)
-    {
-        $task->load(['subtasks' => function ($query) {
-            $query->orderBy('order');
-        }]);
+    {   
+        $task->load(['subtasks.users']);
 
         return Inertia::render('show-task', [
             'task' => $task,
-            'subtasks' => $task->subtasks,
+            'auth_user_id' => Auth::id(),
         ]);
+
     }
 
     /**

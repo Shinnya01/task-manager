@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Task;
 use App\Models\SubTask;
+use App\Models\SubTaskUser;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SubTaskController extends Controller
 {
@@ -29,20 +32,22 @@ class SubTaskController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'task_id' => 'required|exists:tasks,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'order' => 'nullable|integer',
-            'task_id' => 'required|exists:tasks,id', // link to parent task
+            'due_date' => 'nullable|date',
         ]);
+
+        $order = Subtask::where('task_id', $validated['task_id'])->max('order') + 1;
 
         Subtask::create([
             'task_id' => $validated['task_id'],
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
-            'order' => $validated['order'] ?? 1,
+            'order' => $order,
+            'due_date' => $validated['due_date'] ?? null,
         ]);
 
-        return back()->with('success', 'Subtask created successfully.');
     }
 
     /**
@@ -66,7 +71,86 @@ class SubTaskController extends Controller
      */
     public function update(Request $request, SubTask $subTask)
     {
-        //
+        $user = Auth::user();
+
+        // Check if previous subtask exists and is done for this user
+        $previousSubtask = SubTask::where('task_id', $subTask->task_id)
+                                    ->where('order', '<', $subTask->order ?? 0)
+                                    ->orderBy('order', 'desc')
+                                    ->first();
+
+        if ($previousSubtask) {
+            $completed = SubTaskUser::where('user_id', $user->id)
+                                    ->where('subtask_id', $previousSubtask->id)
+                                    ->exists();
+
+            if (!$completed) {
+                return back()->with('error', 'You must complete the previous subtask first.');
+            }
+        }
+
+        // Mark this subtask as done for the current user
+        SubTaskUser::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'subtask_id' => $subTask->id,
+            ],
+            []
+        );
+
+        return response()->json([
+            'message' => 'Subtask marked as done.'
+        ]);
+    }
+
+    public function turnIn(Request $request, SubTask $subTask)
+    {
+        $user = Auth::user();
+
+        // Check if previous subtask exists and is done for this user
+        $previousSubtask = SubTask::where('task_id', $subTask->task_id)
+            ->where('order', '<', $subTask->order ?? 0)
+            ->orderBy('order', 'desc')
+            ->first();
+
+        if ($previousSubtask) {
+            $completed = SubTaskUser::where('user_id', $user->id)
+                ->where('subtask_id', $previousSubtask->id)
+                ->exists();
+
+            if (!$completed) {
+                return back()->with('error', 'You must complete the previous subtask first.');
+            }
+        }
+
+        $filePath = null;
+        if ($request->hasFile('file')) {
+            $filePath = $request->file('file')->store('subtask_files', 'public');
+        }
+
+        $subTaskUser = SubTaskUser::firstOrNew([
+            'user_id' => $user->id,
+            'subtask_id' => $subTask->id,
+            'turned_in_at' => now(),
+        ]);
+        
+
+        if ($subTask->due_date && now() > $subTask->due_date) {
+            $subTaskUser->status = 'missing';
+
+
+            $subTaskUser->save();
+
+            return back()->with('error', 'missing, you turned in after due date.');
+        } else {
+            $subTaskUser->file = $filePath;
+            $subTaskUser->status = 'submitted';
+            $subTaskUser->save();
+
+            return back()->with('success', 'Subtask turned in successfully.');
+        }
+        
+
     }
 
     /**
