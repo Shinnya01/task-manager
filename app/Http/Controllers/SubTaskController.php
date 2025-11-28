@@ -173,6 +173,7 @@ class SubTaskController extends Controller
         $subTask->load('task');
         $comments = Comment::where('sub_task_id', $subTask->id)
             ->where('student_id', $studentId)
+            ->with('user')
             ->orderBy('created_at', 'asc')
             ->get();
 

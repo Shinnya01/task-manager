@@ -1,10 +1,10 @@
-{{-- @extends('errors::minimal')
+@extends('errors::minimal')
 
 @section('title', __('Not Found'))
 @section('code', '404')
-@section('message', __('Not Found')) --}}
+@section('message', __('Not Found'))
 
-@extends('errors::minimal')
+{{-- @extends('errors::minimal')
 
 @section('title', __('Not Found'))
 @section('code', '404')
@@ -59,7 +59,7 @@
                 alt="Page not found illustration" 
                 height="250"
             ><img 
-                src="{{ asset('storage/qwin-yasmin/letter o.png') }}" 
+                src="{{ asset('storage/qwin-yasmin/letter t.png') }}" 
                 alt="Page not found illustration" 
                 height="250"
             ><img 
@@ -81,4 +81,4 @@
             Go Home
         </a>
     </div>
-@endsection
+@endsection --}}

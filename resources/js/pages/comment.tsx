@@ -50,12 +50,12 @@ export default function Comment({ subTask, comments, student, creator }: Comment
                                 )}
                                 {comments.map(comment => {
                                     const isTeacher = subTask.task.creator_id === comment.sender_id;
-                                    const role = isTeacher ? 'Teacher' : 'Student'
+                                    // const role = isTeacher ? 'Teacher' : 'Student'
                                     return (
 
                                     
                                     <div key={comment.id} className="grid grid-cols-[auto_1fr] gap-2">
-                                        <p className="font-medium">{role}</p>
+                                        <p className="font-medium">{comment.user.name}</p>
                                         <p>{comment.comment}</p>
                                     </div>
                                 )})}

@@ -38,6 +38,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import subTask from "@/routes/sub-task";
 
 type SubtaskType = {
   id: number;
@@ -401,11 +402,11 @@ export default function SubTask() {
                       }
                       { done ? 
                         (
-                          <Button size="sm" variant="outline" onClick={() => router.visit(`/sub-task/${task.id}/${auth_user_id}/comment`)}>Comment</Button>
+                          <Button size="sm" variant="outline" onClick={() => router.visit(`/sub-task/${sub.id}/${auth_user_id}/comment`)}>Comment</Button>
                         )
                         : missing ? 
                         (
-                          <Button size="sm" variant="outline" onClick={() => router.visit(`/sub-task/${task.id}/${auth_user_id}/comment`)}>Comment</Button>
+                          <Button size="sm" variant="outline" onClick={() => router.visit(`/sub-task/${sub.id}/${auth_user_id}/comment`)}>Comment</Button>
                         )
                         : null
                       }

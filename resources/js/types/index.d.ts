@@ -63,9 +63,8 @@ export type CommentType = {
   created_at: string;
   updated_at: string;
   sender_id: number;
-  
-  student?: User | null;
-  teacher?: User | null;// eager-loaded user
+
+  user: User
 };
 
 export type SubTaskType = {
