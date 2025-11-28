@@ -30,10 +30,10 @@
 
                    
                 </div>
-                 <div class="ml-4 text-lg dark:text-gray-300 text-gray-700 uppercase tracking-wider">
+                 {{-- <div class="ml-4 text-lg dark:text-gray-300 text-gray-700 uppercase tracking-wider">
                         @yield('custom-content')
                 </div>
-                
+                 --}}
             </div>
         </div>
     </body>

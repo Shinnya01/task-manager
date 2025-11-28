@@ -17,9 +17,16 @@ class TaskController extends Controller
     {
 
         $userClass = auth()->user()->class_name ?? 'irreg';
-        $tasks = Task::where('class_name', $userClass) 
+        
+
+        if(auth()->user()->role !== 'user'){
+            $tasks = Task::where('creator_id', auth()->id()) 
+                    ->get();
+        }else{
+            $tasks = Task::where('class_name', $userClass) 
                 ->orWhere('creator_id', auth()->id()) 
                 ->get();
+        }
 
 
         return Inertia::render('task', compact('tasks'));
