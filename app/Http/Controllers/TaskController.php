@@ -20,11 +20,13 @@ class TaskController extends Controller
         
 
         if(auth()->user()->role !== 'user'){
-            $tasks = Task::where('creator_id', auth()->id()) 
+            $tasks = Task::where('creator_id', auth()->id())
+                    ->withCount('subTasks')
                     ->get();
         }else{
-            $tasks = Task::where('class_name', $userClass) 
-                ->orWhere('creator_id', auth()->id()) 
+            $tasks = Task::where('class_name', $userClass)
+                ->orWhere('creator_id', auth()->id())
+                ->withCount('subTasks')
                 ->get();
         }
 
@@ -95,7 +97,22 @@ class TaskController extends Controller
      */
     public function update(Request $request, Task $task)
     {
-        //
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'class_name' => 'required|string|max:255',
+        ]);
+
+        // Authorization: only creator or non-user roles (teacher/admin) can update
+        if (auth()->id() !== $task->creator_id && auth()->user()->role === 'user') {
+            abort(403, 'Unauthorized');
+        }
+
+        $task->update([
+            'subject' => $validated['subject'],
+            'class_name' => $validated['class_name'],
+        ]);
+
+        return back()->with('success', 'Task updated successfully.');
     }
 
     /**
@@ -103,6 +120,13 @@ class TaskController extends Controller
      */
     public function destroy(Task $task)
     {
-        //
+        // Authorization: only creator or non-user roles (teacher/admin) can delete
+        if (auth()->id() !== $task->creator_id && auth()->user()->role === 'user') {
+            abort(403, 'Unauthorized');
+        }
+
+        $task->delete();
+
+        return back()->with('success', 'Task deleted successfully.');
     }
 }

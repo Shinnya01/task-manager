@@ -93,11 +93,11 @@ export default function Profile({
                                 {auth.user.role === 'user' && (
                                     <div className="grid gap-2">
                                         <Label htmlFor="class_name">Section (Class)</Label>
-                                        
+
 
                                         <div className="p-2 border rounded-md ">
-  {auth.user.class_name}
-</div>
+                                            {auth.user.class_name}
+                                        </div>
 
                                         <Input
                                             id="class_name"
@@ -132,12 +132,12 @@ export default function Profile({
 
                                             {status ===
                                                 'verification-link-sent' && (
-                                                <div className="mt-2 text-sm font-medium text-green-600">
-                                                    A new verification link has
-                                                    been sent to your email
-                                                    address.
-                                                </div>
-                                            )}
+                                                    <div className="mt-2 text-sm font-medium text-green-600">
+                                                        A new verification link has
+                                                        been sent to your email
+                                                        address.
+                                                    </div>
+                                                )}
                                         </div>
                                     )}
 
@@ -167,7 +167,7 @@ export default function Profile({
                 </div>
 
 
-                    <DeleteUser />
+                <DeleteUser />
             </SettingsLayout>
         </AppLayout>
     );

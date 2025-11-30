@@ -74,36 +74,20 @@ class SubTaskController extends Controller
      */
     public function update(Request $request, SubTask $subTask)
     {
-        $user = Auth::user();
-
-        // Check if previous subtask exists and is done for this user
-        $previousSubtask = SubTask::where('task_id', $subTask->task_id)
-                                    ->where('order', '<', $subTask->order ?? 0)
-                                    ->orderBy('order', 'desc')
-                                    ->first();
-
-        if ($previousSubtask) {
-            $completed = SubTaskUser::where('user_id', $user->id)
-                                    ->where('subtask_id', $previousSubtask->id)
-                                    ->exists();
-
-            if (!$completed) {
-                return back()->with('error', 'You must complete the previous subtask first.');
-            }
+        // Check if user is teacher/admin (creator of task)
+        if (Auth::id() !== $subTask->task->creator_id) {
+            return back()->with('error', 'Unauthorized');
         }
 
-        // Mark this subtask as done for the current user
-        SubTaskUser::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'subtask_id' => $subTask->id,
-            ],
-            []
-        );
-
-        return response()->json([
-            'message' => 'Subtask marked as done.'
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'due_date' => 'nullable|date',
         ]);
+
+        $subTask->update($validated);
+
+        return back()->with('success', 'Subtask updated successfully.');
     }
 
     public function turnIn(Request $request, SubTask $subTask)
@@ -218,6 +202,13 @@ class SubTaskController extends Controller
      */
     public function destroy(SubTask $subTask)
     {
-        //
+        // Check if user is teacher/admin (creator of task)
+        if (Auth::id() !== $subTask->task->creator_id) {
+            return back()->with('error', 'Unauthorized');
+        }
+
+        $subTask->delete();
+
+        return back()->with('success', 'Subtask deleted successfully.');
     }
 }
