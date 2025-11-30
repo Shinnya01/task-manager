@@ -78,6 +78,8 @@ export default function SubTask() {
   };
 
   const [selectedFiles, setSelectedFiles] = useState<{ [key: number]: File | null }>({});
+  const [editingSubtask, setEditingSubtask] = useState<SubtaskType | null>(null);
+  const [deletingSubtask, setDeletingSubtask] = useState<SubtaskType | null>(null);
 
   type FormData = {
     title: string;
@@ -106,6 +108,30 @@ export default function SubTask() {
 
     router.post(`/sub-task/${subtaskId}/turn-in`, formData, {
       onSuccess: () => router.reload(),
+    });
+  };
+
+  const handleEditSubtask = () => {
+    if (!editingSubtask) return;
+    router.put(`/sub-task/${editingSubtask.id}`, {
+      title: editingSubtask.title,
+      description: editingSubtask.description,
+      due_date: editingSubtask.due_date,
+    }, {
+      onSuccess: () => {
+        setEditingSubtask(null);
+        router.reload();
+      },
+    });
+  };
+
+  const handleDeleteSubtask = () => {
+    if (!deletingSubtask) return;
+    router.delete(`/sub-task/${deletingSubtask.id}`, {
+      onSuccess: () => {
+        setDeletingSubtask(null);
+        router.reload();
+      },
     });
   };
 
@@ -167,10 +193,9 @@ export default function SubTask() {
       id: "actions",
       cell: ({ row }) => (
         <div className="space-x-2 text-right">
-          <Button size="sm" variant="outline">Edit</Button>
-          <Button size="sm" variant="destructive">Delete</Button>
+          <Button size="sm" variant="outline" onClick={() => setEditingSubtask(row.original)}>Edit</Button>
+          <Button size="sm" variant="destructive" onClick={() => setDeletingSubtask(row.original)}>Delete</Button>
           <Button size="sm" className="bg-blue-700" onClick={() => router.visit(`/sub-task/${row.original.id}/submission`)}>View Submission</Button>
-
         </div>
       ),
     },
@@ -447,6 +472,60 @@ export default function SubTask() {
           )
         } 
       </div>
+
+      {/* Edit Subtask Dialog */}
+      <Dialog open={!!editingSubtask} onOpenChange={(open) => !open && setEditingSubtask(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Subtask</DialogTitle>
+          </DialogHeader>
+          {editingSubtask && (
+            <div className="space-y-3 py-2">
+              <div>
+                <Label>Title</Label>
+                <Input
+                  value={editingSubtask.title}
+                  onChange={(e) => setEditingSubtask({ ...editingSubtask, title: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Description</Label>
+                <Input
+                  value={editingSubtask.description || ''}
+                  onChange={(e) => setEditingSubtask({ ...editingSubtask, description: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Due Date</Label>
+                <Input
+                  type="datetime-local"
+                  value={editingSubtask.due_date || ''}
+                  onChange={(e) => setEditingSubtask({ ...editingSubtask, due_date: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={handleEditSubtask}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Subtask Dialog */}
+      <Dialog open={!!deletingSubtask} onOpenChange={(open) => !open && setDeletingSubtask(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Subtask</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deletingSubtask?.title}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletingSubtask(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDeleteSubtask}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
